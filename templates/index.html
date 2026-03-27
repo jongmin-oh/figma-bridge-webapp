@@ -125,13 +125,36 @@
         .image-container {
             text-align: center;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .figma-image {
-            max-width: 100%;
+            max-width: 400px;
+            max-height: 500px;
+            width: auto;
             height: auto;
             border: 1px solid #e2e8f0;
             border-radius: 10px;
+        }
+
+        .image-copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 50%;
+            transform: translateX(50%);
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .image-copy-btn:hover {
+            background: #5a67d8;
+            opacity: 1;
         }
 
         .copy-section {
@@ -235,6 +258,7 @@
             <div class="result-section">
                 <h3>📱 화면 이미지</h3>
                 <div class="image-container">
+                    <button class="image-copy-btn" onclick="copyImageToClipboard()">이미지 복사</button>
                     <img id="figmaImage" class="figma-image" alt="Figma 화면">
                 </div>
             </div>
@@ -364,11 +388,71 @@
             }
         }
 
-        function showSuccessToast() {
+        async function copyImageToClipboard() {
+            try {
+                const figmaImage = document.getElementById('figmaImage');
+                const src = figmaImage.src;
+
+                // Convert base64 to blob
+                const response = await fetch(src);
+                const blob = await response.blob();
+
+                // Copy to clipboard
+                await navigator.clipboard.write([
+                    new ClipboardItem({
+                        [blob.type]: blob
+                    })
+                ]);
+
+                showSuccessToast('이미지가 클립보드에 복사되었습니다!');
+            } catch (err) {
+                console.error('이미지 복사 실패:', err);
+
+                // Fallback: copy image src URL
+                try {
+                    const figmaImage = document.getElementById('figmaImage');
+                    await navigator.clipboard.writeText(figmaImage.src);
+                    showSuccessToast('이미지 URL이 클립보드에 복사되었습니다!');
+                } catch (fallbackErr) {
+                    console.error('이미지 URL 복사도 실패:', fallbackErr);
+                    showErrorToast('이미지 복사에 실패했습니다. 브라우저가 지원하지 않습니다.');
+                }
+            }
+        }
+
+        function showSuccessToast(message = '클립보드에 복사되었습니다!') {
+            successToast.textContent = message;
             successToast.style.display = 'block';
             setTimeout(() => {
                 successToast.style.display = 'none';
-            }, 2000);
+            }, 3000);
+        }
+
+        function showErrorToast(message) {
+            // Create error toast if it doesn't exist
+            let errorToast = document.getElementById('errorToast');
+            if (!errorToast) {
+                errorToast = document.createElement('div');
+                errorToast.id = 'errorToast';
+                errorToast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #e53e3e;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 5px;
+                    display: none;
+                    z-index: 1000;
+                `;
+                document.body.appendChild(errorToast);
+            }
+
+            errorToast.textContent = message;
+            errorToast.style.display = 'block';
+            setTimeout(() => {
+                errorToast.style.display = 'none';
+            }, 4000);
         }
 
         // Enter key support
