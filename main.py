@@ -167,7 +167,7 @@ class FigmaNodeFetcher:
             vibe_text += f"- {comp['name']} ({comp['type']})\n"
 
         vibe_text += "\n## 구현 가이드\n"
-        vibe_text += "이 화면을 React 컴포넌트로 구현해주세요.\n"
+        vibe_text += "이 화면을 컴포넌트로 구현해주세요.\n"
         vibe_text += "- 반응형 디자인을 고려하여 구현\n"
         vibe_text += "- 적절한 상태 관리 적용\n"
         vibe_text += "- 접근성을 고려한 마크업 사용\n"
@@ -189,7 +189,7 @@ class FigmaNodeFetcher:
 @app.get("/", response_class=HTMLResponse)
 async def get_index(request: Request):
     """Main page with Figma URL input"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html")
 
 @app.post("/api/extract")
 async def extract_figma_data(request: FigmaRequest):
