@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figma Bridge WebApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2d3748;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .input-section {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .url-input {
+            width: 100%;
+            max-width: 600px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .extract-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .extract-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .extract-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            padding: 40px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .result-section {
+            margin-bottom: 40px;
+        }
+
+        .result-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .image-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .figma-image {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .copy-section {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .copy-btn:hover {
+            background: #5a67d8;
+        }
+
+        .json-content {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .vibe-content {
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #48bb78;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Figma Bridge WebApp</h1>
+            <p>피그마 URL을 입력하면 화면 구조 데이터와 이미지를 추출하고, 바이브코딩용 텍스트를 생성합니다</p>
+        </div>
+
+        <div class="input-section">
+            <input
+                type="url"
+                id="figmaUrl"
+                class="url-input"
+                placeholder="Figma URL을 입력하세요 (예: https://www.figma.com/design/...)"
+            >
+            <br>
+            <button id="extractBtn" class="extract-btn">화면 정보 추출하기</button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>피그마에서 데이터를 추출하는 중...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="result-section">
+                <h3>📱 화면 이미지</h3>
+                <div class="image-container">
+                    <img id="figmaImage" class="figma-image" alt="Figma 화면">
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h3>📋 구조화된 JSON Schema</h3>
+                <div class="copy-section">
+                    <button class="copy-btn" onclick="copyToClipboard('jsonContent')">복사</button>
+                    <div id="jsonContent" class="json-content"></div>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h3>🚀 바이브코딩용 텍스트</h3>
+                <div class="copy-section">
+                    <button class="copy-btn" onclick="copyToClipboard('vibeContent')">복사</button>
+                    <div id="vibeContent" class="vibe-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="success-toast" id="successToast">
+        클립보드에 복사되었습니다!
+    </div>
+
+    <script>
+        const figmaUrl = document.getElementById('figmaUrl');
+        const extractBtn = document.getElementById('extractBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const results = document.getElementById('results');
+        const figmaImage = document.getElementById('figmaImage');
+        const jsonContent = document.getElementById('jsonContent');
+        const vibeContent = document.getElementById('vibeContent');
+        const successToast = document.getElementById('successToast');
+
+        extractBtn.addEventListener('click', async () => {
+            const url = figmaUrl.value.trim();
+
+            if (!url) {
+                showError('Figma URL을 입력해주세요.');
+                return;
+            }
+
+            if (!url.includes('figma.com')) {
+                showError('올바른 Figma URL을 입력해주세요.');
+                return;
+            }
+
+            try {
+                showLoading();
+                hideError();
+                hideResults();
+
+                const response = await fetch('/api/extract', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ figma_url: url }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || '추출 중 오류가 발생했습니다.');
+                }
+
+                hideLoading();
+                displayResults(data.data);
+
+            } catch (err) {
+                hideLoading();
+                showError(err.message);
+            }
+        });
+
+        function showLoading() {
+            loading.style.display = 'block';
+            extractBtn.disabled = true;
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+            extractBtn.disabled = false;
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+        }
+
+        function hideError() {
+            error.style.display = 'none';
+        }
+
+        function hideResults() {
+            results.style.display = 'none';
+        }
+
+        function displayResults(data) {
+            figmaImage.src = data.image;
+            jsonContent.textContent = JSON.stringify(data.json_schema, null, 2);
+            vibeContent.textContent = data.vibe_coding_text;
+            results.style.display = 'block';
+        }
+
+        async function copyToClipboard(elementId) {
+            try {
+                const element = document.getElementById(elementId);
+                const text = element.textContent;
+
+                await navigator.clipboard.writeText(text);
+                showSuccessToast();
+            } catch (err) {
+                console.error('클립보드 복사 실패:', err);
+                // Fallback for older browsers
+                const element = document.getElementById(elementId);
+                const range = document.createRange();
+                range.selectNode(element);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+                document.execCommand('copy');
+                window.getSelection().removeAllRanges();
+                showSuccessToast();
+            }
+        }
+
+        function showSuccessToast() {
+            successToast.style.display = 'block';
+            setTimeout(() => {
+                successToast.style.display = 'none';
+            }, 2000);
+        }
+
+        // Enter key support
+        figmaUrl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                extractBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>

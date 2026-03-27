@@ -1,0 +1,36 @@
+{
+    "python.pythonPath": "./.venv/bin/python",
+    "python.defaultInterpreterPath": "./.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "terminal.integrated.env.linux": {
+        "VIRTUAL_ENV": "${workspaceFolder}/.venv",
+        "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}"
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.mypy_cache": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "pylint.args": [
+        "--disable=C0111",
+        "--disable=C0114",
+        "--disable=C0115",
+        "--disable=C0116",
+        "--disable=E0611",
+        "--disable=C0103",
+        "--disable=C0121",
+        "--disable=E1101",
+        "--disable=E0213",
+        "--disable=W0718",
+        "--disable=C0326",
+        "--max-line-length=160"
+    ],
+    "flake8.args": [
+        "--ignore=E203,E231,E226,W291",
+        "--max-line-length=160"
+    ],
+}
